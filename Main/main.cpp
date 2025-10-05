@@ -5,7 +5,7 @@
 #include <font.h>
 
 System sys;
-RgbDisplay disp;
+RgbDisplay disp(font, fontSize);
 
 int main() {
 	sys.initClock(); // Configure the system clock
@@ -16,12 +16,11 @@ int main() {
 
 	sys.delay(1);
 
-	disp.setFont(font, fontSize);
+//	disp.setFont(font, fontSize);
 	disp.clearHigh();
 	disp.clearLow();
+	disp.setBrightness(0.1);
 
-
-	int offset = 0;
 	while (1) {
 		disp.clearLow();
 		disp.printLow(0, 0,  RgbDisplay::ColorGreen);
@@ -43,7 +42,7 @@ int main() {
 
 		sys.delay(1000);
 		disp.waitIdle();
-		LL_GPIO_TogglePin(LED_RED_Port, LED_RED_Pin);
+		sys.ledToggle();
 
 		disp.clearLow();
 		disp.printLow(5, 0,  RgbDisplay::ColorGreen);
@@ -65,9 +64,6 @@ int main() {
 
 		sys.delay(1000);
 		disp.waitIdle();
-		LL_GPIO_TogglePin(LED_RED_Port, LED_RED_Pin);
-
-		++offset;
-		offset %= 8;
-}
+		sys.ledToggle();
+	}
 }

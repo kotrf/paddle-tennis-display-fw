@@ -29,6 +29,9 @@ public:
 	void updateTimerMainCompare(uint32_t compareValue);
 	void updateTimerMainCompareNoPreload(uint32_t compareValue);
 	void delay(uint32_t delayMs);
+	void ledToggle();
+	void ledOn(bool on = true);
+	void ledOff(bool off = true);
 };
 
 #endif // __SYSTEM_H_

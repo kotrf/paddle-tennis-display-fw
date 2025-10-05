@@ -37,13 +37,15 @@ private:
 	uint32_t pixelsLow[PixelNum];
 	const FontChar *font;
 	size_t fontSize;
+	double brightness;
 	bool txBusy;
 
 	bool updateIntevals(const uint32_t *pixelData, size_t len = RgbDisplay::PixelNum);
 	bool print(uint32_t *pixels, char ch, size_t posX, uint32_t color);
+	uint32_t coord2index(uint32_t x, uint32_t y);
 
 public:
-	RgbDisplay();
+	RgbDisplay(const FontChar *font, size_t fontSize);
 	void renderHigh();
 	void renderLow();
 	void putc(char c, int pos = -1);
@@ -53,14 +55,12 @@ public:
 	void timerStartHigh();
 	void timerStartLow();
 	void timerStop();
-	uint32_t coord2index(uint32_t x, uint32_t y);
 	bool isBusy() { return txBusy; }
 	void waitIdle();
 	void setFont(const FontChar *font, size_t fontSize);
+	void setBrightness(double brightness) { this->brightness = brightness; }
 	void clearHigh();
 	void clearLow();
-	void fillPattern(unsigned int offset);
-//	void printDigit(int digitPos, uint32_t color);
 	bool printHigh(char ch, size_t posX, uint32_t color);
 	bool printLow(char ch, size_t posX, uint32_t color);
 };

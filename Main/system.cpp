@@ -297,3 +297,18 @@ void System::initGpio() {
 void System::delay(uint32_t delayMs) {
 	LL_mDelay(delayMs);
 }
+
+void System::ledToggle() {
+	LL_GPIO_TogglePin(LED_RED_Port, LED_RED_Pin);
+}
+
+void System::ledOn(bool on) {
+	if (on)
+		LL_GPIO_SetOutputPin(LED_RED_Port, LED_RED_Pin);
+	else
+		LL_GPIO_ResetOutputPin(LED_RED_Port, LED_RED_Pin);
+}
+
+void System::ledOff(bool off) {
+	ledOn(!off);
+}

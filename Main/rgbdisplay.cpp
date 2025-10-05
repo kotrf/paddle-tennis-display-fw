@@ -3,9 +3,10 @@
 #include "stm32f4xx_ll_tim.h"
 #include "stm32f4xx_ll_dma.h"
 
-RgbDisplay::RgbDisplay()
-	: font(nullptr)
-	, fontSize(0)
+RgbDisplay::RgbDisplay(const FontChar *font, size_t fontSize)
+	: font(font)
+	, fontSize(fontSize)
+	, brightness(1.0)
 	, txBusy(false)
 {
 	for (size_t interval = 0; interval < PixelNum * BitsForPixel; ++interval) {
@@ -118,39 +119,19 @@ void RgbDisplay::clearLow() {
 			pixelsLow[coord2index(x, y)] = ColorBlack;
 }
 
-void RgbDisplay::fillPattern(unsigned int offset) {
-	for ( size_t x=0; x<PixelCols; ++x ) {
-//		rgbPixels[disp.coord2index(x, (0 + offset) % 8)] = RgbColorWhite;
-//		rgbPixels[disp.coord2index(x, (1 + offset) % 8)] = RgbColorWhite;
-//		rgbPixels[disp.coord2index(x, (2 + offset) % 8)] = RgbColorBlue;
-//		rgbPixels[disp.coord2index(x, (3 + offset) % 8)] = RgbColorBlue;
-//		rgbPixels[disp.coord2index(x, (4 + offset) % 8)] = RgbColorRed;
-//		rgbPixels[disp.coord2index(x, (5 + offset) % 8)] = RgbColorRed;
-//		rgbPixels[disp.coord2index(x, (6 + offset) % 8)] = RgbColorGreen;
-//		rgbPixels[disp.coord2index(x, (7 + offset) % 8)] = RgbColorGreen;
-		for ( size_t y=0; y<PixelRows; ++y )
-			pixelsLow[coord2index(x, (y + offset) % 8)] = (x & 1) ? ColorWhite : ColorBlack;
-	}
-}
-
-/*
-void RgbDisplay::printDigit(int digitPos, uint32_t color) {
-	int offsetX = digitPos * 6;
-	for ( int x=1; x<=3; ++x ) {
-		pixelsLow[coord2index(x + offsetX,0)] = color;
-		pixelsLow[coord2index(x + offsetX,7)] = color;
-	}
-
-	for ( int y=1; y<=6; ++y ) {
-		pixelsLow[coord2index(0 + offsetX,y)] = color;
-		pixelsLow[coord2index(4 + offsetX,y)] = color;
-	}
-}
-*/
-
 bool RgbDisplay::print(uint32_t *pixels, char ch, size_t posX, uint32_t color) {
 	if (!font)
 		return false;
+
+	double colorRed   = (color >> 8) & 0xFF;
+	double colorGreen = (color >> 16) & 0xFF;
+	double colorBlue  = color & 0xFF;
+
+	colorRed *= brightness;
+	colorGreen *= brightness;
+	colorBlue *= brightness;
+
+	color = (uint32_t(colorGreen + 0.5) << 16) | (uint32_t(colorRed + 0.5) << 8) | uint32_t(colorBlue + 0.5);
 
 	size_t chIndex = uint8_t(ch);
 	if (chIndex >= fontSize)
