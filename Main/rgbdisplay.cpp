@@ -10,7 +10,7 @@ RgbDisplay::RgbDisplay(const FontChar *font, size_t fontSize)
 	, txBusy(false)
 {
 	for (size_t interval = 0; interval < PixelNum * BitsForPixel; ++interval) {
-		intervals[interval] = TIMER_MAIN_WIDTH_0;
+		intervals[interval] = TIMER_PWM_WIDTH_0;
 	}
 }
 
@@ -24,13 +24,13 @@ bool RgbDisplay::updateIntevals(const uint32_t *pixelData, size_t len) {
 		uint32_t pixelValue = pixelData[pixel];
 
 		for (; bit < BitsForPixel; ++bit) {
-			intervals[interval++] = pixelValue & mask ? TIMER_MAIN_WIDTH_1 : TIMER_MAIN_WIDTH_0;
+			intervals[interval++] = pixelValue & mask ? TIMER_PWM_WIDTH_1 : TIMER_PWM_WIDTH_0;
 			mask >>= 1;
 		}
 	}
 
 	for (size_t interval = len * BitsForPixel; interval < PixelNum * BitsForPixel; ++interval)
-		intervals[interval] = TIMER_MAIN_WIDTH_0;
+		intervals[interval] = TIMER_PWM_WIDTH_0;
 
 	return true;
 }
@@ -64,27 +64,27 @@ void RgbDisplay::onTxError() {
 }
 
 void RgbDisplay::timerStartHigh() {
-	LL_TIM_SetCounter(TIMER_MAIN, TIMER_MAIN_PERIOD-1);
-	LL_TIM_OC_SetMode(TIMER_MAIN, TIMER_MAIN_CHAN_HIGH, LL_TIM_OCMODE_PWM1);
-	LL_TIM_EnableDMAReq_CC2(TIMER_MAIN);
-	LL_TIM_GenerateEvent_CC2(TIMER_MAIN);	// start DMA
-	LL_TIM_EnableCounter(TIMER_MAIN);
+	LL_TIM_SetCounter(TIMER_PWM, TIMER_PWM_PERIOD-1);
+	LL_TIM_OC_SetMode(TIMER_PWM, TIMER_PWM_CHAN_HIGH, LL_TIM_OCMODE_PWM1);
+	LL_TIM_EnableDMAReq_CC2(TIMER_PWM);
+	LL_TIM_GenerateEvent_CC2(TIMER_PWM);	// start DMA
+	LL_TIM_EnableCounter(TIMER_PWM);
 }
 
 void RgbDisplay::timerStartLow() {
-	LL_TIM_SetCounter(TIMER_MAIN, TIMER_MAIN_PERIOD-1);
-	LL_TIM_OC_SetMode(TIMER_MAIN, TIMER_MAIN_CHAN_LOW, LL_TIM_OCMODE_PWM1);
-	LL_TIM_EnableDMAReq_CC1(TIMER_MAIN);
-	LL_TIM_GenerateEvent_CC1(TIMER_MAIN);	// start DMA
-	LL_TIM_EnableCounter(TIMER_MAIN);
+	LL_TIM_SetCounter(TIMER_PWM, TIMER_PWM_PERIOD-1);
+	LL_TIM_OC_SetMode(TIMER_PWM, TIMER_PWM_CHAN_LOW, LL_TIM_OCMODE_PWM1);
+	LL_TIM_EnableDMAReq_CC1(TIMER_PWM);
+	LL_TIM_GenerateEvent_CC1(TIMER_PWM);	// start DMA
+	LL_TIM_EnableCounter(TIMER_PWM);
 }
 
 void RgbDisplay::timerStop() {
-	LL_TIM_DisableCounter(TIMER_MAIN);	// already disabled in IRQ Handler
-	LL_TIM_DisableDMAReq_CC1(TIMER_MAIN);
-	LL_TIM_DisableDMAReq_CC2(TIMER_MAIN);
-	LL_TIM_ClearFlag_CC1(TIMER_MAIN);
-	LL_TIM_ClearFlag_CC2(TIMER_MAIN);
+	LL_TIM_DisableCounter(TIMER_PWM);	// already disabled in IRQ Handler
+	LL_TIM_DisableDMAReq_CC1(TIMER_PWM);
+	LL_TIM_DisableDMAReq_CC2(TIMER_PWM);
+	LL_TIM_ClearFlag_CC1(TIMER_PWM);
+	LL_TIM_ClearFlag_CC2(TIMER_PWM);
 }
 
 uint32_t RgbDisplay::coord2index(uint32_t x, uint32_t y) {
@@ -155,4 +155,31 @@ bool RgbDisplay::printHigh(char ch, size_t posX, uint32_t color) {
 
 bool RgbDisplay::printLow(char ch, size_t posX, uint32_t color) {
 	return print(pixelsLow, ch, posX, color);
+}
+
+void RgbDisplay::fillPattern(unsigned int offset) {
+	uint32_t color = ColorWhite;
+
+	double colorRed   = (color >> 8) & 0xFF;
+	double colorGreen = (color >> 16) & 0xFF;
+	double colorBlue  = color & 0xFF;
+
+	colorRed *= brightness;
+	colorGreen *= brightness;
+	colorBlue *= brightness;
+
+	color = (uint32_t(colorGreen + 0.5) << 16) | (uint32_t(colorRed + 0.5) << 8) | uint32_t(colorBlue + 0.5);
+
+	for ( size_t x=0; x<PixelCols; ++x ) {
+//		rgbPixels[disp.coord2index(x, (0 + offset) % 8)] = RgbColorWhite;
+//		rgbPixels[disp.coord2index(x, (1 + offset) % 8)] = RgbColorWhite;
+//		rgbPixels[disp.coord2index(x, (2 + offset) % 8)] = RgbColorBlue;
+//		rgbPixels[disp.coord2index(x, (3 + offset) % 8)] = RgbColorBlue;
+//		rgbPixels[disp.coord2index(x, (4 + offset) % 8)] = RgbColorRed;
+//		rgbPixels[disp.coord2index(x, (5 + offset) % 8)] = RgbColorRed;
+//		rgbPixels[disp.coord2index(x, (6 + offset) % 8)] = RgbColorGreen;
+//		rgbPixels[disp.coord2index(x, (7 + offset) % 8)] = RgbColorGreen;
+		for ( size_t y=0; y<PixelRows; ++y )
+			pixelsLow[coord2index(x, (y + offset) % 8)] = (x & 1) ? color : ColorBlack;
+	}
 }

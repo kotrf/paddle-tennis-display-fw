@@ -6,17 +6,11 @@
 
 class RgbDisplay {
 public:
-	static constexpr uint32_t ColorWhite	= 0x202020;
+	static constexpr uint32_t ColorWhite	= 0xFFFFFF;
 	static constexpr uint32_t ColorBlack	= 0x000000;
-	static constexpr uint32_t ColorBlue 	= 0x000040;
-	static constexpr uint32_t ColorRed 		= 0x004000;
-	static constexpr uint32_t ColorGreen	= 0x400000;
-
-	//static constexpr uint32_t ColorWhite	= 0xFFFFFF;
-	//static constexpr uint32_t ColorBlack	= 0x000000;
-	//static constexpr uint32_t ColorBlue 	= 0x0000FF;
-	//static constexpr uint32_t ColorRed 	= 0x00FF00;
-	//static constexpr uint32_t ColorGreen = 0xFF0000;
+	static constexpr uint32_t ColorBlue 	= 0x0000FF;
+	static constexpr uint32_t ColorRed 	= 0x00FF00;
+	static constexpr uint32_t ColorGreen = 0xFF0000;
 
 	static constexpr size_t PixelRows = 8;
 	static constexpr size_t PixelCols = 32;
@@ -63,6 +57,7 @@ public:
 	void clearLow();
 	bool printHigh(char ch, size_t posX, uint32_t color);
 	bool printLow(char ch, size_t posX, uint32_t color);
+	void fillPattern(unsigned int offset);
 };
 
 #endif // RGBDISPLAY_H_

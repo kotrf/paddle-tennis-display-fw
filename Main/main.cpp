@@ -3,23 +3,24 @@
 #include <defs.h>
 #include <rgbdisplay.h>
 #include <font.h>
+#include <score.h>
 
 System sys;
 RgbDisplay disp(font, fontSize);
+Score score;
 
 int main() {
 	sys.initClock(); // Configure the system clock
 	sys.initGpio();
 	sys.initDma(disp.getTxBuffer(), RgbDisplay::BitsTotal);
-	sys.initTimerMain();
+	sys.initTimerPwm();
 //	sys.initUsart1();
 
 	sys.delay(1);
 
-//	disp.setFont(font, fontSize);
 	disp.clearHigh();
 	disp.clearLow();
-	disp.setBrightness(0.1);
+	disp.setBrightness(1.0);
 
 	while (1) {
 		disp.clearLow();

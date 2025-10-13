@@ -113,10 +113,10 @@ void System::initDma(uint32_t *timerCcData, uint32_t timerCcDataLen) {
 	LL_DMA_SetChannelSelection(DMA1, LL_DMA_STREAM_5, LL_DMA_CHANNEL_5);
 
 	LL_DMA_ConfigAddresses(DMA1, LL_DMA_STREAM_4, (uint32_t)timerCcData,
-			(uint32_t) &TIMER_MAIN->CCR1,
+			(uint32_t) &TIMER_PWM->CCR1,
 			LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_STREAM_4));
 	LL_DMA_ConfigAddresses(DMA1, LL_DMA_STREAM_5, (uint32_t)timerCcData,
-			(uint32_t) &TIMER_MAIN->CCR2,
+			(uint32_t) &TIMER_PWM->CCR2,
 			LL_DMA_GetDataTransferDirection(DMA1, LL_DMA_STREAM_5));
 
 	LL_DMA_SetDataLength(DMA1, LL_DMA_STREAM_4, timerCcDataLen);
@@ -134,13 +134,62 @@ void System::initDma(uint32_t *timerCcData, uint32_t timerCcDataLen) {
 }
 
 /**
- * @brief TIM1 Initialization Function
+ * @brief TIM_PWM Initialization Function
+ * @param None
+ * @retval None
+ */
+void System::initTimerPwm() {
+	LL_TIM_InitTypeDef TIM_InitStruct = { 0 };
+	LL_TIM_OC_InitTypeDef TIM_OC_InitStruct = { 0 };
+
+	TIM_InitStruct.Prescaler = 0;
+	TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
+	TIM_InitStruct.Autoreload = TIMER_PWM_PERIOD-1;
+	TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
+	TIM_InitStruct.RepetitionCounter = 0;
+	LL_TIM_Init(TIMER_PWM, &TIM_InitStruct);
+
+	LL_TIM_SetCounter(TIMER_PWM, TIMER_PWM_PERIOD-1);
+	LL_TIM_DisableARRPreload(TIMER_PWM);
+	LL_TIM_SetClockSource(TIMER_PWM, LL_TIM_CLOCKSOURCE_INTERNAL);
+
+	TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
+	TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_ENABLE;
+	TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
+	TIM_OC_InitStruct.CompareValue = TIMER_PWM_WIDTH_0;
+	TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
+	LL_TIM_OC_Init(TIMER_PWM, TIMER_PWM_CHAN_HIGH, &TIM_OC_InitStruct);
+	LL_TIM_OC_Init(TIMER_PWM, TIMER_PWM_CHAN_LOW, &TIM_OC_InitStruct);
+
+	LL_TIM_OC_EnablePreload(TIMER_PWM, TIMER_PWM_CHAN_HIGH);
+	LL_TIM_OC_EnablePreload(TIMER_PWM, TIMER_PWM_CHAN_LOW);
+	LL_TIM_OC_DisableFast(TIMER_PWM, TIMER_PWM_CHAN_HIGH);
+	LL_TIM_OC_DisableFast(TIMER_PWM, TIMER_PWM_CHAN_LOW);
+
+	LL_TIM_SetTriggerOutput(TIMER_PWM, LL_TIM_TRGO_RESET);	// ???
+	LL_TIM_DisableMasterSlaveMode(TIMER_PWM);
+
+	LL_TIM_DisableIT_UPDATE(TIMER_PWM);
+	LL_TIM_DisableIT_CC1(TIMER_PWM);
+
+	// TIM_PWM interrupt Init
+	NVIC_SetPriority(TIMER_PWM_IRQn,
+			NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+	NVIC_EnableIRQ(TIMER_PWM_IRQn);
+
+	// Force update generation
+//	LL_TIM_GenerateEvent_CC1(TIMER_MAIN);
+
+//	LL_TIM_EnableDMAReq_CC1(TIMER_MAIN);
+}
+
+/**
+ * @brief TIM_MAIN Initialization Function
  * @param None
  * @retval None
  */
 void System::initTimerMain() {
 	LL_TIM_InitTypeDef TIM_InitStruct = { 0 };
-	LL_TIM_OC_InitTypeDef TIM_OC_InitStruct = { 0 };
 
 	TIM_InitStruct.Prescaler = 0;
 	TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
@@ -149,59 +198,22 @@ void System::initTimerMain() {
 	TIM_InitStruct.RepetitionCounter = 0;
 	LL_TIM_Init(TIMER_MAIN, &TIM_InitStruct);
 
-	LL_TIM_SetCounter(TIMER_MAIN, TIMER_MAIN_PERIOD-1);
+	LL_TIM_SetCounter(TIMER_MAIN, 0);
 	LL_TIM_DisableARRPreload(TIMER_MAIN);
 	LL_TIM_SetClockSource(TIMER_MAIN, LL_TIM_CLOCKSOURCE_INTERNAL);
 
-	TIM_OC_InitStruct.OCMode = LL_TIM_OCMODE_PWM1;
-	TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_ENABLE;
-	TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
-	TIM_OC_InitStruct.CompareValue = TIMER_MAIN_WIDTH_0;
-	TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_HIGH;
-	LL_TIM_OC_Init(TIMER_MAIN, TIMER_MAIN_CHAN_HIGH, &TIM_OC_InitStruct);
-	LL_TIM_OC_Init(TIMER_MAIN, TIMER_MAIN_CHAN_LOW, &TIM_OC_InitStruct);
-
-	LL_TIM_OC_EnablePreload(TIMER_MAIN, TIMER_MAIN_CHAN_HIGH);
-	LL_TIM_OC_EnablePreload(TIMER_MAIN, TIMER_MAIN_CHAN_LOW);
-	LL_TIM_OC_DisableFast(TIMER_MAIN, TIMER_MAIN_CHAN_HIGH);
-	LL_TIM_OC_DisableFast(TIMER_MAIN, TIMER_MAIN_CHAN_LOW);
-
-	LL_TIM_SetTriggerOutput(TIMER_MAIN, LL_TIM_TRGO_RESET);	// ???
-	LL_TIM_DisableMasterSlaveMode(TIMER_MAIN);
-
-	LL_TIM_DisableIT_UPDATE(TIMER_MAIN);
-	LL_TIM_DisableIT_CC1(TIMER_MAIN);
+	LL_TIM_EnableIT_UPDATE(TIMER_PWM);
+	LL_TIM_DisableIT_CC1(TIMER_PWM);
 
 	// TIM3 interrupt Init
-	NVIC_SetPriority(TIMER_MAIN_IRQn,
+	NVIC_SetPriority(TIMER_PWM_IRQn,
 			NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
-	NVIC_EnableIRQ(TIMER_MAIN_IRQn);
+	NVIC_EnableIRQ(TIMER_PWM_IRQn);
 
 	// Force update generation
 //	LL_TIM_GenerateEvent_CC1(TIMER_MAIN);
 
 //	LL_TIM_EnableDMAReq_CC1(TIMER_MAIN);
-}
-
-void System::runTimerMain(bool en) {
-	if (en) {
-		LL_TIM_SetCounter(TIMER_MAIN, 0);
-		LL_TIM_EnableCounter(TIMER_MAIN);
-	}
-	else {
-		LL_TIM_DisableCounter(TIMER_MAIN);
-		LL_TIM_ClearFlag_CC1(TIMER_MAIN);
-	}
-}
-
-void System::updateTimerMainCompare(uint32_t compareValue) {
-	LL_TIM_OC_SetCompareCH1(TIMER_MAIN, compareValue);
-}
-
-void System::updateTimerMainCompareNoPreload(uint32_t compareValue) {
-	LL_TIM_OC_DisablePreload(TIMER_MAIN, TIMER_MAIN_CHAN_LOW);
-	LL_TIM_OC_SetCompareCH1(TIMER_MAIN, compareValue);
-	LL_TIM_OC_EnablePreload(TIMER_MAIN, TIMER_MAIN_CHAN_LOW);
 }
 
 /**
@@ -234,24 +246,14 @@ void System::initGpio() {
 	LL_GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
 	// LED "Red"
-	LL_GPIO_ResetOutputPin(LED_RED_Port, LED_RED_Pin);
+	LL_GPIO_ResetOutputPin(LED_INT_Port, LED_INT_Pin);
 
-	GPIO_InitStruct.Pin = LED_RED_Pin;
+	GPIO_InitStruct.Pin = LED_INT_Pin;
 	GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
 	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
 	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
 	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-	LL_GPIO_Init(LED_RED_Port, &GPIO_InitStruct);
-
-	// Debug signal
-	LL_GPIO_ResetOutputPin(DBG_Port, DBG_Pin);
-
-	GPIO_InitStruct.Pin = DBG_Pin;
-	GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-	LL_GPIO_Init(DBG_Port, &GPIO_InitStruct);
+	LL_GPIO_Init(LED_INT_Port, &GPIO_InitStruct);
 
 	// TIMER_MAIN Output GPIO Config
 	LL_GPIO_ResetOutputPin(RGB_DO_Port, RGB_DO_High_Pin);
@@ -299,14 +301,14 @@ void System::delay(uint32_t delayMs) {
 }
 
 void System::ledToggle() {
-	LL_GPIO_TogglePin(LED_RED_Port, LED_RED_Pin);
+	LL_GPIO_TogglePin(LED_INT_Port, LED_INT_Pin);
 }
 
 void System::ledOn(bool on) {
 	if (on)
-		LL_GPIO_SetOutputPin(LED_RED_Port, LED_RED_Pin);
+		LL_GPIO_SetOutputPin(LED_INT_Port, LED_INT_Pin);
 	else
-		LL_GPIO_ResetOutputPin(LED_RED_Port, LED_RED_Pin);
+		LL_GPIO_ResetOutputPin(LED_INT_Port, LED_INT_Pin);
 }
 
 void System::ledOff(bool off) {

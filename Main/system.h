@@ -22,12 +22,10 @@ public:
 	System();
 	void initClock();
 	void initDma(uint32_t *timerCcData, uint32_t timerCcDataLen);
+	void initTimerPwm();
 	void initTimerMain();
 	void initUsart1();
 	void initGpio();
-	void runTimerMain(bool en);
-	void updateTimerMainCompare(uint32_t compareValue);
-	void updateTimerMainCompareNoPreload(uint32_t compareValue);
 	void delay(uint32_t delayMs);
 	void ledToggle();
 	void ledOn(bool on = true);
